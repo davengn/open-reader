@@ -31,6 +31,14 @@ describe("highlights API", () => {
 
     expect(listResponse.status).toBe(200);
     expect(list.highlights).toEqual([expect.objectContaining({ id: created.highlight.id, text: "Selected text" })]);
+
+    const wholeBookResponse = await GET(new Request(`http://test.local/api/highlights?bookId=${bookId}`));
+    const wholeBookList = (await wholeBookResponse.json()) as { highlights: Array<{ id: number; text: string }> };
+
+    expect(wholeBookResponse.status).toBe(200);
+    expect(wholeBookList.highlights).toEqual([
+      expect.objectContaining({ id: created.highlight.id, text: "Selected text" }),
+    ]);
   });
 
   it("rejects invalid highlight rectangles", async () => {

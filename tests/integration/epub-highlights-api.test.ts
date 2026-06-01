@@ -38,6 +38,13 @@ describe("EPUB highlights API", () => {
     expect(list.highlights[0].text).toBe("EPUB highlighted passage");
     expect(list.highlights[0].cfi).toBe("epubcfi(/6/4[chap-2]!/4/2/10/1:0)");
 
+    const panelListResponse = await GET(
+      new Request(`http://test.local/api/highlights?bookId=${id}&format=epub&includeNotes=true`)
+    );
+    const panelList = (await panelListResponse.json()) as { highlights: Array<{ id: number; note: null }> };
+    expect(panelListResponse.status).toBe(200);
+    expect(panelList.highlights).toEqual([expect.objectContaining({ id: created.highlight.id, note: null })]);
+
     // 3. Delete the highlight
     const deleteResponse = await DELETE(
       new Request(`http://test.local/api/highlights/${created.highlight.id}`),

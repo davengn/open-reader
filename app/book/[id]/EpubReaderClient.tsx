@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Columns } from "lucide-react";
+import { Bookmark, Columns } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReaderHeader } from "@/components/reader/ReaderHeader";
+import { NotesPanel } from "@/components/reader/NotesPanel";
 import { EpubViewerStage } from "@/components/reader/EpubViewerStage";
 import { ReaderStatusBanner } from "@/components/reader/ReaderStatusBanner";
 import { HighlightColorPicker } from "@/components/reader/HighlightColorPicker";
@@ -17,8 +18,15 @@ import { normalizeProgressPercent, normalizeChapterTitle } from "@/lib/reader/ep
 import { isCrossChapterCfi } from "@/lib/epub/highlights";
 import { flattenToc } from "@/lib/epub/toc";
 import { loadStoredFontSize, saveStoredFontSize, type EpubFontSize } from "@/lib/reader/fontSize";
+import { getStoredNotesPanelPreference, saveNotesPanelPreference } from "@/lib/reader/notesPanelPreference";
 import type { Book, Rendition } from "epubjs";
-import type { EpubHighlight, HighlightColor, EpubSelectionDraft, EpubTocItem } from "@/lib/types/reader";
+import type {
+  EpubHighlight,
+  HighlightColor,
+  EpubSelectionDraft,
+  EpubTocItem,
+  ReaderAnnotationNavigationTarget,
+} from "@/lib/types/reader";
 
 type EpubReaderClientProps = {
   bookId: string;
@@ -53,6 +61,7 @@ export function EpubReaderClient({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [currentHref, setCurrentHref] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState<EpubFontSize>(16);
+  const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   
   const viewerRef = useRef<HTMLDivElement | null>(null);
   const bookRef = useRef<Book | null>(null);
@@ -77,6 +86,17 @@ export function EpubReaderClient({
       console.error("Failed to fetch highlights:", e);
     }
   }, [bookId]);
+
+  useEffect(() => {
+    const stored = getStoredNotesPanelPreference(window.localStorage);
+    if (stored) {
+      setNotesPanelOpen(stored === "open");
+    }
+  }, []);
+
+  useEffect(() => {
+    saveNotesPanelPreference(window.localStorage, notesPanelOpen ? "open" : "closed");
+  }, [notesPanelOpen]);
 
   const flushProgressBeforeLeaving = useCallback(() => {
     const snapshot = progressSnapshotRef.current;
@@ -486,6 +506,18 @@ export function EpubReaderClient({
     }
   };
 
+  const handleNotesNavigate = useCallback(async (target: ReaderAnnotationNavigationTarget) => {
+    if (!target.cfi || !renditionRef.current) {
+      return;
+    }
+
+    try {
+      await renditionRef.current.display(target.cfi);
+    } catch (error) {
+      console.warn("Failed to navigate to note target:", error);
+    }
+  }, []);
+
   return (
     <main className="pdf-reader-shell">
       <ReaderHeader
@@ -505,6 +537,15 @@ export function EpubReaderClient({
             <Columns className="inline-icon" aria-hidden="true" />
           </Button>
         )}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setNotesPanelOpen((open) => !open)}
+          aria-label={notesPanelOpen ? "Hide notes" : "Show notes"}
+          title={notesPanelOpen ? "Hide notes" : "Show notes"}
+        >
+          <Bookmark className="inline-icon" aria-hidden="true" />
+        </Button>
         <FontSizeControl value={fontSize} onChange={handleFontSizeChange} />
         <span className="reader-progress-label">{percentage.toFixed(1)}%</span>
       </ReaderHeader>
@@ -517,7 +558,12 @@ export function EpubReaderClient({
         />
       )}
 
-      <div className={`epub-workspace ${sidebarOpen ? "has-sidebar" : ""}`}>
+      <div
+        className={`epub-workspace ${sidebarOpen ? "has-sidebar" : ""}${notesPanelOpen ? " has-notes-panel" : ""}`}
+        style={{
+          gridTemplateColumns: `${sidebarOpen ? "280px " : ""}minmax(0, 1fr)${notesPanelOpen ? " 320px" : ""}`,
+        }}
+      >
         <EpubTocPanel
           toc={toc}
           onSelect={handleTocSelect}
@@ -527,6 +573,16 @@ export function EpubReaderClient({
         />
         
         <EpubViewerStage ref={viewerRef} />
+
+        <NotesPanel
+          bookId={bookId}
+          isOpen={notesPanelOpen}
+          currentPage={null}
+          currentCfi={cfi}
+          currentChapter={chapterTitle}
+          onClose={() => setNotesPanelOpen(false)}
+          onNavigate={handleNotesNavigate}
+        />
 
         {status === "ready" && (
           <EpubChapterNav

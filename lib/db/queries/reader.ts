@@ -1,8 +1,16 @@
 import { getRawDb } from "@/lib/db";
 import { getBookById } from "@/lib/db/queries/books";
+import { listAttachedNotesForHighlights } from "@/lib/db/queries/notes";
 import { calculatePdfProgress, clampPdfPage, normalizeProgressPercentage, normalizeTotalPages } from "@/lib/reader/progress";
 import { parseHighlightRects, serializeHighlightRects, validateHighlightRects } from "@/lib/reader/highlightRects";
-import type { HighlightColor, ReaderHighlight, ReaderProgress, EpubProgress, EpubHighlight } from "@/lib/types/reader";
+import type {
+  HighlightColor,
+  ReaderHighlight,
+  ReaderProgress,
+  EpubProgress,
+  EpubHighlight,
+  ReaderPanelHighlight,
+} from "@/lib/types/reader";
 import { HIGHLIGHT_COLORS } from "@/lib/types/reader";
 import { isValidCfi } from "@/lib/epub/cfi";
 import { normalizeProgressPercent, normalizeChapterTitle } from "@/lib/reader/epubProgress";
@@ -28,6 +36,8 @@ type HighlightRow = {
   id: number;
   book_id: string;
   page: number | null;
+  cfi?: string | null;
+  chapter?: string | null;
   text: string;
   color: HighlightColor;
   rects: string | null;
@@ -134,6 +144,43 @@ export function listPageHighlights(bookId: string, page: number): ReaderHighligh
     .all(bookId, currentPage) as HighlightRow[];
 
   return rows.map(rowToHighlight).filter(Boolean) as ReaderHighlight[];
+}
+
+export function listPanelHighlights(bookId: string, includeNotes = false): ReaderPanelHighlight[] {
+  const book = getBookById(bookId);
+  if (!book) {
+    throw new ReaderQueryError("Book not found", 404);
+  }
+
+  const rows = getRawDb()
+    .prepare(
+      `SELECT id, book_id, page, cfi, chapter, text, color, rects, created_at, updated_at
+       FROM highlights
+       WHERE book_id = ?
+       ORDER BY COALESCE(page, 2147483647) ASC, COALESCE(chapter, '') COLLATE NOCASE ASC, created_at ASC, id ASC`,
+    )
+    .all(bookId) as HighlightRow[];
+
+  const notes = includeNotes
+    ? listAttachedNotesForHighlights(
+        bookId,
+        rows.map((row) => row.id),
+      )
+    : new Map();
+
+  return rows.map((row) => ({
+    id: row.id,
+    bookId: row.book_id,
+    text: row.text,
+    color: normalizeHighlightColor(row.color),
+    page: row.page,
+    cfi: row.cfi ?? null,
+    chapter: row.chapter ?? null,
+    rects: parseHighlightRects(row.rects),
+    note: notes.get(row.id) ?? null,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
 }
 
 export function createPageHighlight(input: CreateHighlightInput): ReaderHighlight {

@@ -1,0 +1,15 @@
+export const highlightsNotesPanelScenarios = [
+  "PDF reader toggles the notes panel from the bookmark icon and reserves a 320 px desktop rail",
+  "EPUB reader toggles the notes panel from the bookmark icon and keeps header controls readable",
+  "Mobile viewport opens the notes panel as a drawer without overlapping reader header controls",
+  "Highlight rows group by chapter, show color bars, location labels, excerpts, and note indicators",
+  "Inline highlight note editor autosaves after 800 ms and shows Saved after persistence",
+  "Failed autosave keeps unsaved textarea content and displays Save failed. Your changes are not saved.",
+  "Whitespace-only autosave deletes the existing note and returns the row to Add note",
+  "Add page note saves a PDF page locator and reloads as a standalone note",
+  "Add page note saves an EPUB CFI locator and reloads as a standalone note",
+  "Clicking PDF highlight and standalone note rows navigates to the expected page while keeping the panel open",
+  "Clicking EPUB highlight and standalone note rows displays the expected CFI while keeping the panel open",
+  "Malformed or stale navigation targets show a non-blocking panel error",
+  "Export downloads a Markdown file from /api/books/[id]/export",
+];

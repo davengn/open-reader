@@ -1,7 +1,12 @@
 "use server";
 
 import { upsertPdfProgress, upsertEpubProgress } from "@/lib/db/queries/reader";
+import {
+  deleteReaderNote as deleteReaderNoteQuery,
+  saveReaderNote as saveReaderNoteQuery,
+} from "@/lib/db/queries/notes";
 import { calculatePdfProgress } from "@/lib/reader/progress";
+import type { ReaderNote } from "@/lib/types/reader";
 
 type UpdateProgressInput = {
   bookId: string;
@@ -64,3 +69,62 @@ export async function updateEpubProgress(input: UpdateEpubProgressInput): Promis
   };
 }
 
+type SaveReaderNoteInput = {
+  bookId: string;
+  noteId?: number | null;
+  highlightId?: number | null;
+  content: string;
+  page?: number | null;
+  cfi?: string | null;
+};
+
+export async function saveReaderNote(input: SaveReaderNoteInput): Promise<
+  | {
+      ok: true;
+      deleted: false;
+      detached?: false;
+      note: ReaderNote;
+    }
+  | {
+      ok: true;
+      deleted: true;
+      note: null;
+    }
+  | {
+      ok: true;
+      deleted: false;
+      detached: true;
+      message: string;
+      note: ReaderNote;
+    }
+> {
+  const result = saveReaderNoteQuery(input);
+  if (result.deleted) {
+    return {
+      ok: true,
+      deleted: true,
+      note: null,
+    };
+  }
+
+  if (result.detached) {
+    return {
+      ok: true,
+      deleted: false,
+      detached: true,
+      message: result.message,
+      note: result.note,
+    };
+  }
+
+  return {
+    ok: true,
+    deleted: false,
+    note: result.note,
+  };
+}
+
+export async function deleteReaderNote(input: { bookId: string; noteId: number }): Promise<{ ok: true }> {
+  deleteReaderNoteQuery(input.bookId, input.noteId);
+  return { ok: true };
+}

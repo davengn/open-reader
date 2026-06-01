@@ -4,6 +4,7 @@ import {
   listPageHighlights,
   createEpubHighlight,
   listEpubHighlights,
+  listPanelHighlights,
   ReaderQueryError,
 } from "@/lib/db/queries/reader";
 import type { HighlightColor } from "@/lib/types/reader";
@@ -15,20 +16,26 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const bookId = url.searchParams.get("bookId") ?? "";
   const format = url.searchParams.get("format") ?? "";
+  const includeNotes = url.searchParams.get("includeNotes") === "true";
 
   if (!bookId) {
     return jsonError("Provide bookId", 400);
   }
 
-  if (format === "epub") {
+  const rawPage = url.searchParams.get("page");
+  if (!rawPage) {
     try {
-      return Response.json({ highlights: listEpubHighlights(bookId) });
+      if (format === "epub" && !includeNotes) {
+        return Response.json({ highlights: listEpubHighlights(bookId) });
+      }
+
+      return Response.json({ highlights: listPanelHighlights(bookId, includeNotes) });
     } catch (error) {
       return readerErrorResponse(error);
     }
   }
 
-  const page = Number(url.searchParams.get("page"));
+  const page = Number(rawPage);
   if (!Number.isInteger(page) || page < 1) {
     return jsonError("Provide a positive page", 400);
   }

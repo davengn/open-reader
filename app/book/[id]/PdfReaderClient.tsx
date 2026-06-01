@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { AlertTriangle, Columns, Loader2 } from "lucide-react";
+import { AlertTriangle, Bookmark, Columns, Loader2 } from "lucide-react";
 import { HighlightColorPicker } from "@/components/reader/HighlightColorPicker";
 import { HighlightTooltip } from "@/components/reader/HighlightTooltip";
 import { PageControls } from "@/components/reader/PageControls";
 import { PdfCanvasPage } from "@/components/reader/PdfCanvasPage";
+import { NotesPanel } from "@/components/reader/NotesPanel";
 import { ReaderHeader } from "@/components/reader/ReaderHeader";
 import { ReaderNavigationPanel } from "@/components/reader/ReaderNavigationPanel";
 import { ZoomControl } from "@/components/reader/ZoomControl";
@@ -16,7 +17,17 @@ import { loadPdfDocument } from "@/lib/pdf/client";
 import { getContinuousPageWindow, getPdfPageNumbers } from "@/lib/reader/pageWindow";
 import { calculatePdfProgress, clampPdfPage, parsePageInput } from "@/lib/reader/progress";
 import { loadStoredZoom, normalizeZoom, saveStoredZoom, type ReaderZoom } from "@/lib/reader/zoom";
-import type { HighlightColor, ReaderBookmark, ReaderHighlight, SelectionDraft } from "@/lib/types/reader";
+import {
+  getStoredNotesPanelPreference,
+  saveNotesPanelPreference,
+} from "@/lib/reader/notesPanelPreference";
+import type {
+  HighlightColor,
+  ReaderAnnotationNavigationTarget,
+  ReaderBookmark,
+  ReaderHighlight,
+  SelectionDraft,
+} from "@/lib/types/reader";
 import type { PDFDocumentProxy } from "pdfjs-dist/legacy/build/pdf.mjs";
 
 type PdfReaderClientProps = {
@@ -73,6 +84,7 @@ export function PdfReaderClient({
   const [sidebarWidth, setSidebarWidth] = useState(260);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isResizing, setIsResizing] = useState(false);
+  const [notesPanelOpen, setNotesPanelOpen] = useState(false);
   const lastWidthRef = useRef(260);
 
   const toggleSidebar = useCallback(() => {
@@ -159,6 +171,17 @@ export function PdfReaderClient({
   });
   const [, startTransition] = useTransition();
 
+  useEffect(() => {
+    const stored = getStoredNotesPanelPreference(window.localStorage);
+    if (stored) {
+      setNotesPanelOpen(stored === "open");
+    }
+  }, []);
+
+  useEffect(() => {
+    saveNotesPanelPreference(window.localStorage, notesPanelOpen ? "open" : "closed");
+  }, [notesPanelOpen]);
+
   const progressSummary = useMemo(() => {
     if (!totalPages) {
       return "0%";
@@ -234,6 +257,15 @@ export function PdfReaderClient({
       setCurrentPage(nextPage);
     },
     [totalPages],
+  );
+
+  const handleNotesNavigate = useCallback(
+    (target: ReaderAnnotationNavigationTarget) => {
+      if (target.page) {
+        goToPage(target.page);
+      }
+    },
+    [goToPage],
   );
 
   const fetchHighlightsForPage = useCallback(
@@ -661,6 +693,15 @@ export function PdfReaderClient({
         <Button
           variant="outline"
           size="icon"
+          onClick={() => setNotesPanelOpen((open) => !open)}
+          aria-label={notesPanelOpen ? "Hide notes" : "Show notes"}
+          title={notesPanelOpen ? "Hide notes" : "Show notes"}
+        >
+          <Bookmark className="inline-icon" aria-hidden="true" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
           onClick={toggleSidebar}
           aria-label={sidebarOpen ? "Hide outline" : "Show outline"}
           title={sidebarOpen ? "Hide outline" : "Show outline"}
@@ -680,7 +721,15 @@ export function PdfReaderClient({
         <ZoomControl value={zoom} onChange={handleZoomChange} />
       </ReaderHeader>
 
-      <div className="reader-workspace" style={{ gridTemplateColumns: sidebarOpen ? `${sidebarWidth}px minmax(0, 1fr)` : "0px minmax(0, 1fr)", userSelect: isResizing ? "none" : "auto" }}>
+      <div
+        className={`reader-workspace${notesPanelOpen ? " has-notes-panel" : ""}`}
+        style={{
+          gridTemplateColumns: `${sidebarOpen ? `${sidebarWidth}px` : "0px"} minmax(0, 1fr)${
+            notesPanelOpen ? " 320px" : ""
+          }`,
+          userSelect: isResizing ? "none" : "auto",
+        }}
+      >
         <ReaderNavigationPanel
           currentPage={currentPage}
           totalPages={totalPages}
@@ -734,6 +783,16 @@ export function PdfReaderClient({
             </section>
           )}
         </div>
+
+        <NotesPanel
+          bookId={bookId}
+          isOpen={notesPanelOpen}
+          currentPage={currentPage}
+          currentCfi={null}
+          currentChapter={null}
+          onClose={() => setNotesPanelOpen(false)}
+          onNavigate={handleNotesNavigate}
+        />
       </div>
 
       {selectionDraft ? (

@@ -101,10 +101,18 @@ Recommended targeted tests after implementation:
 
 ## Implementation Validation Notes
 
-To be completed during implementation:
-
-- Record exact `npm run lint`, `npm test`, and `npm run build` results.
-- Capture fixtures or seeded data used for PDF highlights, EPUB highlights,
-  attached notes, standalone notes, stale CFI, and empty export checks.
-- Capture browser notes or screenshots for desktop panel, mobile drawer,
-  autosave saved/error states, and export download behavior.
+- `npm run lint`: Passed on 2026-06-01 via `tsc --noEmit`.
+- `npm test`: Passed on 2026-06-01 with 32 test files and 109 tests passing.
+  Vitest printed its existing `vite-tsconfig-paths` deprecation warning.
+- `npm run build`: First run compiled but failed page-data collection with stale
+  `.next` route metadata for `/api/books/[id]`; after safely removing `.next`,
+  the rerun passed and listed `/api/books/[id]/export`, `/api/notes`, and
+  `/api/notes/[id]`. Final verification reruns of `npm run lint`, `npm test`,
+  and `npm run build` also passed from the completed task tree.
+- Fixture coverage added for PDF highlights, EPUB highlights, attached notes,
+  standalone PDF notes, standalone EPUB notes, highlight-deleted detach fallback,
+  FTS note search, deletion cascade cleanup, Markdown export, empty export, and
+  missing-book export errors.
+- Browser smoke check on `http://127.0.0.1:3000`: library loaded, PDF reader
+  opened, bookmark notes toggle appeared, notes panel opened with actions and an
+  existing highlight row, and no console warnings or errors were reported.

@@ -3,7 +3,12 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const MIGRATION_TABLE = "_open_reader_migrations";
-const MIGRATIONS = ["0001_book_library.sql", "0002_pdf_reader.sql", "0003_epub_reader.sql"];
+const MIGRATIONS = [
+  "0001_book_library.sql",
+  "0002_pdf_reader.sql",
+  "0003_epub_reader.sql",
+  "0004_highlights_notes.sql",
+];
 
 export function runMigrations(rawDb: Database.Database) {
   rawDb.pragma("foreign_keys = ON");

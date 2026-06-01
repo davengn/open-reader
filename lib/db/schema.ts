@@ -68,16 +68,31 @@ export const highlights = sqliteTable(
   }),
 );
 
-export const notes = sqliteTable("notes", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  highlightId: integer("highlight_id").references(() => highlights.id, { onDelete: "set null" }),
+export const notes = sqliteTable(
+  "notes",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    highlightId: integer("highlight_id").references(() => highlights.id, { onDelete: "set null" }),
+    content: text("content").notNull(),
+    page: integer("page"),
+    cfi: text("cfi"),
+    createdAt: integer("created_at"),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => ({
+    bookUpdatedIdx: index("notes_book_updated_idx").on(table.bookId, table.updatedAt),
+    bookPageIdx: index("notes_book_page_idx").on(table.bookId, table.page),
+    bookCfiIdx: index("notes_book_cfi_idx").on(table.bookId, table.cfi),
+    highlightUnique: uniqueIndex("notes_highlight_unique").on(table.highlightId),
+  }),
+);
+
+export const notesFts = sqliteTable("notes_fts", {
   content: text("content").notNull(),
-  page: integer("page"),
-  cfi: text("cfi"),
-  updatedAt: integer("updated_at").notNull(),
+  bookId: text("bookId").notNull(),
 });
 
 export const flashcards = sqliteTable("flashcards", {
@@ -113,6 +128,7 @@ export const schema = {
   readingProgress,
   highlights,
   notes,
+  notesFts,
   flashcards,
   bookChunks,
 };

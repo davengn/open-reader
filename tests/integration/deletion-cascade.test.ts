@@ -45,6 +45,7 @@ describe("book deletion cascade", () => {
     expect(countRows("reading_progress", id)).toBe(0);
     expect(countRows("highlights", id)).toBe(0);
     expect(countRows("notes", id)).toBe(0);
+    expect(countFtsRows("notes_fts", id)).toBe(0);
     expect(countRows("flashcards", id)).toBe(0);
     expect(countRows("book_chunks", id)).toBe(0);
     await expect(accessPath(filePath)).rejects.toThrow();
@@ -67,6 +68,10 @@ function seedDependentRows(bookId: string) {
 
 function countRows(table: string, bookId: string) {
   return getRawDb().prepare(`SELECT COUNT(*) FROM ${table} WHERE book_id = ?`).pluck().get(bookId) as number;
+}
+
+function countFtsRows(table: string, bookId: string) {
+  return getRawDb().prepare(`SELECT COUNT(*) FROM ${table} WHERE bookId = ?`).pluck().get(bookId) as number;
 }
 
 async function accessPath(relativePath: string) {
