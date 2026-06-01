@@ -1,0 +1,275 @@
+openapi: 3.1.0
+info:
+  title: Open Reader PDF Reader API
+  version: 0.1.0
+  description: Local route-handler contracts for streaming PDF files and managing PDF highlights.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/books/{bookId}/file:
+    get:
+      summary: Stream a local PDF file for PDF.js
+      operationId: streamPdfBookFile
+      parameters:
+        - $ref: "#/components/parameters/BookId"
+      responses:
+        "200":
+          description: Raw PDF bytes.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                const: application/pdf
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Book exists but is not a PDF reader target.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          $ref: "#/components/responses/ServerError"
+  /api/books/{bookId}/progress:
+    post:
+      summary: Save PDF reading progress from pagehide or keepalive flows
+      operationId: savePdfBookProgress
+      parameters:
+        - $ref: "#/components/parameters/BookId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveProgressRequest"
+      responses:
+        "200":
+          description: Progress saved.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [progress]
+                properties:
+                  progress:
+                    $ref: "#/components/schemas/ReaderProgress"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/highlights:
+    get:
+      summary: List highlights for one PDF page
+      operationId: listPageHighlights
+      parameters:
+        - name: bookId
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: Highlights on the requested page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [highlights]
+                properties:
+                  highlights:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Highlight"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Create a PDF highlight
+      operationId: createHighlight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateHighlightRequest"
+      responses:
+        "201":
+          description: Highlight created.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [highlight]
+                properties:
+                  highlight:
+                    $ref: "#/components/schemas/Highlight"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/highlights/{highlightId}:
+    delete:
+      summary: Delete a highlight
+      operationId: deleteHighlight
+      parameters:
+        - name: highlightId
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "204":
+          description: Highlight deleted.
+        "404":
+          $ref: "#/components/responses/NotFound"
+components:
+  parameters:
+    BookId:
+      name: bookId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    HighlightColor:
+      type: string
+      enum: [yellow, green, blue, pink]
+    ReaderProgress:
+      type: object
+      required: [bookId, currentPage, percentage, updatedAt]
+      properties:
+        bookId:
+          type: string
+        currentPage:
+          type: integer
+          minimum: 1
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        updatedAt:
+          type: integer
+          minimum: 0
+    SaveProgressRequest:
+      type: object
+      required: [currentPage, totalPages, percentage]
+      properties:
+        currentPage:
+          type: integer
+          minimum: 1
+        totalPages:
+          type: integer
+          minimum: 1
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+    HighlightRect:
+      type: object
+      required: [x, y, width, height]
+      properties:
+        x:
+          type: number
+          minimum: 0
+        y:
+          type: number
+          minimum: 0
+        width:
+          type: number
+          exclusiveMinimum: 0
+        height:
+          type: number
+          exclusiveMinimum: 0
+    Highlight:
+      type: object
+      required: [id, bookId, page, text, color, rects, createdAt]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        bookId:
+          type: string
+        page:
+          type: integer
+          minimum: 1
+        text:
+          type: string
+          minLength: 1
+        color:
+          $ref: "#/components/schemas/HighlightColor"
+        rects:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/HighlightRect"
+        createdAt:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type:
+            - integer
+            - "null"
+          minimum: 0
+    CreateHighlightRequest:
+      type: object
+      required: [bookId, page, text, color, rects]
+      properties:
+        bookId:
+          type: string
+          minLength: 1
+        page:
+          type: integer
+          minimum: 1
+        text:
+          type: string
+          minLength: 1
+        color:
+          $ref: "#/components/schemas/HighlightColor"
+        rects:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/HighlightRect"
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServerError:
+      description: Local file or database operation failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

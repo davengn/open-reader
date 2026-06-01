@@ -16,7 +16,7 @@ export const books = sqliteTable(
     coverHash: text("cover_hash"),
     totalPages: integer("total_pages"),
     totalLocations: integer("total_locations"),
-    readingPercent: integer("reading_percent").notNull().default(0),
+    readingPercent: real("reading_percent").notNull().default(0),
     lastReadAt: integer("last_read_at"),
     createdAt: integer("created_at").notNull(),
     updatedAt: integer("updated_at").notNull(),
@@ -35,7 +35,7 @@ export const readingProgress = sqliteTable("reading_progress", {
   page: integer("page"),
   cfi: text("cfi"),
   chapter: text("chapter"),
-  percent: integer("percent").notNull(),
+  percent: real("percent").notNull(),
   updatedAt: integer("updated_at").notNull(),
 });
 
@@ -49,7 +49,9 @@ export const highlights = sqliteTable("highlights", {
   page: integer("page"),
   cfi: text("cfi"),
   chapter: text("chapter"),
+  rects: text("rects").notNull().default("[]"),
   createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
 });
 
 export const notes = sqliteTable("notes", {

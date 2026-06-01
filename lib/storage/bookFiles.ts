@@ -24,7 +24,13 @@ export function resolveStoragePath(relativePath: string) {
   if (!normalized.startsWith("books/")) {
     throw new Error(`Storage path must be relative to books/: ${relativePath}`);
   }
-  return path.join(getBookRoot(), normalized.slice("books/".length));
+  const root = path.resolve(getBookRoot());
+  const target = path.resolve(root, normalized.slice("books/".length));
+  const rootWithSeparator = root.endsWith(path.sep) ? root : `${root}${path.sep}`;
+  if (target !== root && !target.startsWith(rootWithSeparator)) {
+    throw new Error(`Storage path escapes books root: ${relativePath}`);
+  }
+  return target;
 }
 
 export async function ensureBookStorage() {

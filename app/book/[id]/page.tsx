@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PdfReaderClient } from "@/app/book/[id]/PdfReaderClient";
 import { getBookById } from "@/lib/db/queries/books";
+import { getCurrentPdfProgress } from "@/lib/db/queries/reader";
+import { clampPdfPage } from "@/lib/reader/progress";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +15,25 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
     notFound();
   }
 
+  if (book.format === "pdf" && book.status === "ready") {
+    const savedProgress = getCurrentPdfProgress(book.id);
+    const savedPage = savedProgress?.currentPage ?? 1;
+    const totalPages =
+      book.totalPages && book.totalPages > 0 && book.totalPages >= savedPage ? book.totalPages : null;
+    const initialPage = totalPages ? clampPdfPage(savedPage, totalPages) : savedPage;
+
+    return (
+      <PdfReaderClient
+        bookId={book.id}
+        title={book.title}
+        author={book.author}
+        pdfUrl={`/api/books/${encodeURIComponent(book.id)}/file`}
+        initialPage={initialPage}
+        initialTotalPages={totalPages}
+      />
+    );
+  }
+
   return (
     <main className="page-shell reader-shell">
       <Link className="text-button" href="/">
@@ -19,11 +41,17 @@ export default async function BookPage({ params }: { params: Promise<{ id: strin
       </Link>
 
       <section className="reader-panel">
-        <p className="eyebrow">{book.format.toUpperCase()} reader shell</p>
+        <p className="eyebrow">{book.format.toUpperCase()} reader</p>
         <h1>{book.title}</h1>
         <p className="reader-meta">
           {book.author} - {book.readingPercent}% read
         </p>
+        {book.format !== "pdf" ? (
+          <p className="reader-meta">This reader currently supports PDF books. EPUB reading is planned separately.</p>
+        ) : null}
+        {book.status !== "ready" ? (
+          <p className="message error">{book.statusMessage ?? "This book is still being prepared for reading."}</p>
+        ) : null}
       </section>
 
       <section className="technical-panel" aria-label="Book storage details">
