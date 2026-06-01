@@ -1,5 +1,5 @@
-"use client";
-
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type PageControlsProps = {
@@ -26,12 +26,12 @@ export function PageControls({
 
   return (
     <div className="page-controls" aria-label="Page controls">
-      <button className="icon-button" type="button" onClick={onPrevious} disabled={isFirstPage} aria-label="Previous page">
+      <Button variant="ghost" size="icon" className="w-[34px] h-[34px]" onClick={onPrevious} disabled={isFirstPage} aria-label="Previous page">
         <ChevronLeft className="inline-icon" aria-hidden="true" />
-      </button>
+      </Button>
       <label className="page-input-label">
         <span className="sr-only">Page number</span>
-        <input
+        <Input
           className="page-input"
           id="reader-page-input"
           name="readerPage"
@@ -51,9 +51,9 @@ export function PageControls({
         />
       </label>
       <span className="page-total">/ {totalPages ?? "..."}</span>
-      <button className="icon-button" type="button" onClick={onNext} disabled={isLastPage} aria-label="Next page">
+      <Button variant="ghost" size="icon" className="w-[34px] h-[34px]" onClick={onNext} disabled={isLastPage} aria-label="Next page">
         <ChevronRight className="inline-icon" aria-hidden="true" />
-      </button>
+      </Button>
     </div>
   );
 }

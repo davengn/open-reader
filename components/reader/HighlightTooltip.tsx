@@ -1,13 +1,14 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
-import type { ReaderHighlight } from "@/lib/types/reader";
+import type { ReaderHighlight, EpubHighlight } from "@/lib/types/reader";
 
 type HighlightTooltipProps = {
-  highlight: ReaderHighlight;
+  highlight: ReaderHighlight | EpubHighlight;
   x: number;
   y: number;
-  onDelete: (highlight: ReaderHighlight) => void;
+  onDelete: (highlight: any) => void;
   onDismiss: () => void;
 };
 
@@ -27,12 +28,12 @@ export function HighlightTooltip({ highlight, x, y, onDelete, onDismiss }: Highl
     >
       <p>{highlight.text}</p>
       <div className="highlight-tooltip-actions">
-        <button className="text-button" type="button" onClick={onDismiss}>
+        <Button variant="ghost" onClick={onDismiss}>
           Dismiss
-        </button>
-        <button className="icon-button danger" type="button" onClick={() => onDelete(highlight)} aria-label="Delete highlight">
+        </Button>
+        <Button variant="destructive" size="icon" className="w-[34px] h-[34px]" onClick={() => onDelete(highlight)} aria-label="Delete highlight">
           <Trash2 className="inline-icon" aria-hidden="true" />
-        </button>
+        </Button>
       </div>
     </div>
   );

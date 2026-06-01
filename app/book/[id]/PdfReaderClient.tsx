@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Columns, Loader2 } from "lucide-react";
 import { HighlightColorPicker } from "@/components/reader/HighlightColorPicker";
 import { HighlightTooltip } from "@/components/reader/HighlightTooltip";
 import { PageControls } from "@/components/reader/PageControls";
@@ -9,6 +9,7 @@ import { PdfCanvasPage } from "@/components/reader/PdfCanvasPage";
 import { ReaderHeader } from "@/components/reader/ReaderHeader";
 import { ReaderNavigationPanel } from "@/components/reader/ReaderNavigationPanel";
 import { ZoomControl } from "@/components/reader/ZoomControl";
+import { Button } from "@/components/ui/button";
 import { updateProgress } from "@/app/book/[id]/actions";
 import { loadPdfBookmarks } from "@/lib/pdf/bookmarks";
 import { loadPdfDocument } from "@/lib/pdf/client";
@@ -69,6 +70,83 @@ export function PdfReaderClient({
   const [isLoadingBookmarks, setIsLoadingBookmarks] = useState(false);
   const [hasRestoredInitialPosition, setHasRestoredInitialPosition] = useState(false);
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState(260);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isResizing, setIsResizing] = useState(false);
+  const lastWidthRef = useRef(260);
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen((prevOpen) => {
+      const nextOpen = !prevOpen;
+      if (nextOpen) {
+        setSidebarWidth(lastWidthRef.current);
+      } else {
+        lastWidthRef.current = sidebarWidth > 0 ? sidebarWidth : lastWidthRef.current;
+        setSidebarWidth(0);
+      }
+      return nextOpen;
+    });
+  }, [sidebarWidth]);
+
+  const startResizing = useCallback((event: React.MouseEvent | React.TouchEvent) => {
+    if ("preventDefault" in event) {
+      event.preventDefault();
+    }
+    setIsResizing(true);
+  }, []);
+
+  const resize = useCallback((mouseMoveEvent: MouseEvent) => {
+    const newWidth = mouseMoveEvent.clientX;
+    if (newWidth < 150) {
+      setSidebarWidth(0);
+      setSidebarOpen(false);
+    } else if (newWidth <= 500) {
+      setSidebarWidth(newWidth);
+      lastWidthRef.current = newWidth;
+      setSidebarOpen(true);
+    }
+  }, []);
+
+  const resizeTouch = useCallback((touchMoveEvent: TouchEvent) => {
+    const touch = touchMoveEvent.touches[0];
+    if (touch) {
+      const newWidth = touch.clientX;
+      if (newWidth < 150) {
+        setSidebarWidth(0);
+        setSidebarOpen(false);
+      } else if (newWidth <= 500) {
+        setSidebarWidth(newWidth);
+        lastWidthRef.current = newWidth;
+        setSidebarOpen(true);
+      }
+    }
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      window.addEventListener("mousemove", resize);
+      window.addEventListener("mouseup", stopResizing);
+      window.addEventListener("touchmove", resizeTouch, { passive: true });
+      window.addEventListener("touchend", stopResizing);
+    } else {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+      window.removeEventListener("touchmove", resizeTouch);
+      window.removeEventListener("touchend", stopResizing);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", resize);
+      window.removeEventListener("mouseup", stopResizing);
+      window.removeEventListener("touchmove", resizeTouch);
+      window.removeEventListener("touchend", stopResizing);
+    };
+  }, [isResizing, resize, resizeTouch, stopResizing]);
+
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const pageSlotRefs = useRef(new Map<number, HTMLElement>());
   const pendingScrollPageRef = useRef<number | null>(currentPage);
@@ -580,6 +658,15 @@ export function PdfReaderClient({
   return (
     <main className="pdf-reader-shell">
       <ReaderHeader title={title} author={author} currentPage={currentPage} totalPages={totalPages}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleSidebar}
+          aria-label={sidebarOpen ? "Hide outline" : "Show outline"}
+          title={sidebarOpen ? "Hide outline" : "Show outline"}
+        >
+          <Columns className="inline-icon" aria-hidden="true" />
+        </Button>
         <span className="reader-progress-label">{progressSummary}</span>
         <PageControls
           currentPage={currentPage}
@@ -593,7 +680,7 @@ export function PdfReaderClient({
         <ZoomControl value={zoom} onChange={handleZoomChange} />
       </ReaderHeader>
 
-      <div className="reader-workspace">
+      <div className="reader-workspace" style={{ gridTemplateColumns: sidebarOpen ? `${sidebarWidth}px minmax(0, 1fr)` : "0px minmax(0, 1fr)", userSelect: isResizing ? "none" : "auto" }}>
         <ReaderNavigationPanel
           currentPage={currentPage}
           totalPages={totalPages}
@@ -601,6 +688,9 @@ export function PdfReaderClient({
           bookmarks={bookmarks}
           isLoadingBookmarks={isLoadingBookmarks}
           onPageSelect={goToPage}
+          onResizeStart={startResizing}
+          isResizing={isResizing}
+          style={{ display: sidebarOpen ? undefined : "none" }}
         />
 
         <div className="pdf-stage" ref={scrollContainerRef}>

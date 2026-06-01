@@ -1,0 +1,356 @@
+openapi: 3.1.0
+info:
+  title: Open Reader Highlights and Notes API
+  version: 0.1.0
+  description: Local route-handler contracts for whole-book highlight review, Markdown notes, note search, and Markdown export.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/highlights:
+    get:
+      summary: List highlights for a book or a PDF page
+      operationId: listHighlightsForPanel
+      parameters:
+        - name: bookId
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pdf, epub]
+        - name: includeNotes
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Highlights for the requested page or whole book.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [highlights]
+                properties:
+                  highlights:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PanelHighlight"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/notes:
+    get:
+      summary: List or search notes for one book
+      operationId: listBookNotes
+      parameters:
+        - name: bookId
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 1
+        - name: standalone
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 200
+      responses:
+        "200":
+          description: Notes for the current book, optionally filtered by search query.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [notes]
+                properties:
+                  notes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Note"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      summary: Create or upsert a note
+      operationId: createNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveNoteRequest"
+      responses:
+        "200":
+          description: Existing note updated or whitespace note deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveNoteResponse"
+        "201":
+          description: Note created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveNoteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Highlight was deleted; note was converted to standalone when possible.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetachedNoteResponse"
+  /api/notes/{noteId}:
+    patch:
+      summary: Update one note by id
+      operationId: updateNote
+      parameters:
+        - $ref: "#/components/parameters/NoteId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveNoteRequest"
+      responses:
+        "200":
+          description: Note updated or whitespace note deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveNoteResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Highlight was deleted; note was converted to standalone when possible.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DetachedNoteResponse"
+    delete:
+      summary: Delete one note by id
+      operationId: deleteNote
+      parameters:
+        - $ref: "#/components/parameters/NoteId"
+      responses:
+        "204":
+          description: Note deleted.
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /api/books/{bookId}/export:
+    get:
+      summary: Download highlights and notes as Markdown
+      operationId: exportBookAnnotationsMarkdown
+      parameters:
+        - $ref: "#/components/parameters/BookId"
+      responses:
+        "200":
+          description: Markdown export file.
+          headers:
+            Content-Type:
+              schema:
+                type: string
+                const: text/markdown; charset=utf-8
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            text/markdown:
+              schema:
+                type: string
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/ServerError"
+components:
+  parameters:
+    BookId:
+      name: bookId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    NoteId:
+      name: noteId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+  schemas:
+    HighlightColor:
+      type: string
+      enum: [yellow, green, blue, pink]
+    Note:
+      type: object
+      required: [id, bookId, content, updatedAt]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        bookId:
+          type: string
+        highlightId:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        content:
+          type: string
+          maxLength: 50000
+        page:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        cfi:
+          type:
+            - string
+            - "null"
+        createdAt:
+          type:
+            - integer
+            - "null"
+          minimum: 0
+        updatedAt:
+          type: integer
+          minimum: 0
+    PanelHighlight:
+      type: object
+      required: [id, bookId, text, color, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        bookId:
+          type: string
+        text:
+          type: string
+          minLength: 1
+        color:
+          $ref: "#/components/schemas/HighlightColor"
+        page:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        cfi:
+          type:
+            - string
+            - "null"
+        chapter:
+          type:
+            - string
+            - "null"
+        rects:
+          type:
+            - array
+            - "null"
+          items:
+            type: object
+        note:
+          oneOf:
+            - $ref: "#/components/schemas/Note"
+            - type: "null"
+        createdAt:
+          type: integer
+          minimum: 0
+        updatedAt:
+          type: integer
+          minimum: 0
+    SaveNoteRequest:
+      type: object
+      required: [bookId, content]
+      properties:
+        bookId:
+          type: string
+          minLength: 1
+        highlightId:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        content:
+          type: string
+          maxLength: 50000
+        page:
+          type:
+            - integer
+            - "null"
+          minimum: 1
+        cfi:
+          type:
+            - string
+            - "null"
+    SaveNoteResponse:
+      type: object
+      required: [note, deleted]
+      properties:
+        note:
+          oneOf:
+            - $ref: "#/components/schemas/Note"
+            - type: "null"
+        deleted:
+          type: boolean
+    DetachedNoteResponse:
+      type: object
+      required: [note, detached, message]
+      properties:
+        note:
+          $ref: "#/components/schemas/Note"
+        detached:
+          type: boolean
+          const: true
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServerError:
+      description: Local database or export operation failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

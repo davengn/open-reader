@@ -20,17 +20,6 @@ describe("PDF file route", () => {
     expect(Buffer.from(await response.arrayBuffer())).toEqual(buffer);
   });
 
-  it("rejects non-PDF books", async () => {
-    await createTestEnv();
-    await ensureBookStorage();
-    const { id } = await createReadyBook("epub");
-
-    const response = await GET(new Request(`http://test.local/api/books/${id}/file`), {
-      params: Promise.resolve({ id }),
-    });
-
-    expect(response.status).toBe(409);
-  });
 
   it("returns not found for missing books", async () => {
     await createTestEnv();

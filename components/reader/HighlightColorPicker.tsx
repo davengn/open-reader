@@ -7,6 +7,7 @@ type HighlightColorPickerProps = {
   y: number;
   onSelect: (color: HighlightColor) => void;
   onDismiss: () => void;
+  isCrossChapter?: boolean;
 };
 
 const LABELS: Record<HighlightColor, string> = {
@@ -16,7 +17,7 @@ const LABELS: Record<HighlightColor, string> = {
   pink: "Pink",
 };
 
-export function HighlightColorPicker({ x, y, onSelect, onDismiss }: HighlightColorPickerProps) {
+export function HighlightColorPicker({ x, y, onSelect, onDismiss, isCrossChapter }: HighlightColorPickerProps) {
   return (
     <div
       className="highlight-picker"
@@ -30,16 +31,20 @@ export function HighlightColorPicker({ x, y, onSelect, onDismiss }: HighlightCol
         }
       }}
     >
-      {HIGHLIGHT_COLORS.map((color) => (
-        <button
-          key={color}
-          className={`highlight-swatch ${color}`}
-          type="button"
-          aria-label={`${LABELS[color]} highlight`}
-          title={`${LABELS[color]} highlight`}
-          onClick={() => onSelect(color)}
-        />
-      ))}
+      {isCrossChapter ? (
+        <span className="cross-chapter-warning">Selections cannot span multiple chapters</span>
+      ) : (
+        HIGHLIGHT_COLORS.map((color) => (
+          <button
+            key={color}
+            className={`highlight-swatch ${color}`}
+            type="button"
+            aria-label={`${LABELS[color]} highlight`}
+            title={`${LABELS[color]} highlight`}
+            onClick={() => onSelect(color)}
+          />
+        ))
+      )}
     </div>
   );
 }

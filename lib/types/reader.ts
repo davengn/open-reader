@@ -43,3 +43,40 @@ export type SelectionDraft = {
   anchorX: number;
   anchorY: number;
 };
+
+export type EpubProgress = {
+  bookId: string;
+  cfi: string;
+  percentage: number;
+  chapter?: string;
+  updatedAt: number;
+};
+
+export type EpubHighlight = {
+  id: number;
+  bookId: string;
+  cfi: string;
+  text: string;
+  color: HighlightColor;
+  chapter?: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type EpubSelectionDraft = {
+  cfiRange: string;
+  text: string;
+  chapter?: string;
+  anchorX: number;
+  anchorY: number;
+  isCrossChapter?: boolean;
+};
+
+export type EpubTocItem = {
+  id: string;
+  label: string;
+  href: string;
+  subitems?: EpubTocItem[];
+  depth?: number;
+};
+

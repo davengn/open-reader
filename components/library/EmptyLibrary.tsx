@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import type { BookFilter } from "@/lib/types/books";
 
 type EmptyLibraryProps = {
@@ -13,9 +14,9 @@ export function EmptyLibrary({ totalBooks, activeFilter, onClearFilter }: EmptyL
         <p className="eyebrow">No matches</p>
         <h2>No books match your filter.</h2>
         <p>Switch back to the full library to see the rest of your local shelf.</p>
-        <button className="button-secondary" type="button" onClick={onClearFilter}>
+        <Button variant="secondary" onClick={onClearFilter}>
           Clear filter
-        </button>
+        </Button>
       </section>
     );
   }

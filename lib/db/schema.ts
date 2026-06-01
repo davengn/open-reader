@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const books = sqliteTable(
   "books",
@@ -26,33 +26,47 @@ export const books = sqliteTable(
   }),
 );
 
-export const readingProgress = sqliteTable("reading_progress", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  locatorType: text("locator_type", { enum: ["pdf-page", "epub-cfi"] }).notNull(),
-  page: integer("page"),
-  cfi: text("cfi"),
-  chapter: text("chapter"),
-  percent: real("percent").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-});
+export const readingProgress = sqliteTable(
+  "reading_progress",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    locatorType: text("locator_type", { enum: ["pdf-page", "epub-cfi"] }).notNull(),
+    page: integer("page"),
+    cfi: text("cfi"),
+    chapter: text("chapter"),
+    percent: real("percent").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => ({
+    bookUnique: uniqueIndex("reading_progress_book_unique").on(table.bookId),
+  }),
+);
 
-export const highlights = sqliteTable("highlights", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  bookId: text("book_id")
-    .notNull()
-    .references(() => books.id, { onDelete: "cascade" }),
-  text: text("text").notNull(),
-  color: text("color").notNull(),
-  page: integer("page"),
-  cfi: text("cfi"),
-  chapter: text("chapter"),
-  rects: text("rects").notNull().default("[]"),
-  createdAt: integer("created_at").notNull(),
-  updatedAt: integer("updated_at").notNull(),
-});
+export const highlights = sqliteTable(
+  "highlights",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    bookId: text("book_id")
+      .notNull()
+      .references(() => books.id, { onDelete: "cascade" }),
+    text: text("text").notNull(),
+    color: text("color").notNull(),
+    page: integer("page"),
+    cfi: text("cfi"),
+    chapter: text("chapter"),
+    rects: text("rects").notNull().default("[]"),
+    createdAt: integer("created_at").notNull(),
+    updatedAt: integer("updated_at").notNull(),
+  },
+  (table) => ({
+    bookPageIdx: index("highlights_book_page_idx").on(table.bookId, table.page),
+    bookCreatedIdx: index("highlights_book_created_idx").on(table.bookId, table.createdAt),
+    bookCfiIdx: index("highlights_book_cfi_idx").on(table.bookId, table.cfi),
+  }),
+);
 
 export const notes = sqliteTable("notes", {
   id: integer("id").primaryKey({ autoIncrement: true }),

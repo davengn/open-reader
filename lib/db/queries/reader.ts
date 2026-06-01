@@ -2,8 +2,11 @@ import { getRawDb } from "@/lib/db";
 import { getBookById } from "@/lib/db/queries/books";
 import { calculatePdfProgress, clampPdfPage, normalizeProgressPercentage, normalizeTotalPages } from "@/lib/reader/progress";
 import { parseHighlightRects, serializeHighlightRects, validateHighlightRects } from "@/lib/reader/highlightRects";
-import type { HighlightColor, ReaderHighlight, ReaderProgress } from "@/lib/types/reader";
+import type { HighlightColor, ReaderHighlight, ReaderProgress, EpubProgress, EpubHighlight } from "@/lib/types/reader";
 import { HIGHLIGHT_COLORS } from "@/lib/types/reader";
+import { isValidCfi } from "@/lib/epub/cfi";
+import { normalizeProgressPercent, normalizeChapterTitle } from "@/lib/reader/epubProgress";
+
 
 export class ReaderQueryError extends Error {
   constructor(
@@ -225,4 +228,197 @@ function assertPositivePage(value: number) {
   }
 
   return value;
+}
+
+export type UpdateEpubProgressInput = {
+  bookId: string;
+  cfi: string;
+  percentage: number;
+  chapter?: string;
+};
+
+export type CreateEpubHighlightInput = {
+  bookId: string;
+  cfi: string;
+  text: string;
+  color: HighlightColor;
+  chapter?: string;
+};
+
+export function getCurrentEpubProgress(bookId: string): EpubProgress | null {
+  const row = getRawDb()
+    .prepare(
+      `SELECT book_id, cfi, percent, chapter, updated_at
+       FROM reading_progress
+       WHERE book_id = ? AND locator_type = 'epub-cfi'`,
+    )
+    .get(bookId) as { book_id: string; cfi: string; percent: number; chapter: string | null; updated_at: number } | undefined;
+
+  if (!row || !row.cfi) {
+    return null;
+  }
+
+  return {
+    bookId: row.book_id,
+    cfi: row.cfi,
+    percentage: normalizeProgressPercent(row.percent),
+    chapter: row.chapter ?? undefined,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function upsertEpubProgress(input: UpdateEpubProgressInput): EpubProgress {
+  const book = getBookById(input.bookId);
+  if (!book) {
+    throw new ReaderQueryError("Book not found", 404);
+  }
+
+  if (book.format !== "epub") {
+    throw new ReaderQueryError("Progress can only be saved for EPUB books", 400);
+  }
+
+  if (!isValidCfi(input.cfi)) {
+    throw new ReaderQueryError("CFI is invalid", 400);
+  }
+
+  const percentage = normalizeProgressPercent(input.percentage);
+  const chapter = input.chapter ? normalizeChapterTitle(input.chapter) : undefined;
+  const updatedAt = Date.now();
+
+  getRawDb()
+    .prepare(
+      `INSERT INTO reading_progress (
+        book_id, locator_type, cfi, percent, chapter, updated_at
+      ) VALUES (?, 'epub-cfi', ?, ?, ?, ?)
+      ON CONFLICT(book_id) DO UPDATE SET
+        locator_type = excluded.locator_type,
+        cfi = excluded.cfi,
+        percent = excluded.percent,
+        chapter = excluded.chapter,
+        updated_at = excluded.updated_at`,
+    )
+    .run(book.id, input.cfi, percentage, chapter ?? null, updatedAt);
+
+  getRawDb()
+    .prepare(
+      `UPDATE books SET
+        reading_percent = ?,
+        last_read_at = ?,
+        updated_at = ?
+       WHERE id = ?`,
+    )
+    .run(percentage, updatedAt, updatedAt, book.id);
+
+  return {
+    bookId: book.id,
+    cfi: input.cfi,
+    percentage,
+    chapter,
+    updatedAt,
+  };
+}
+
+export function listEpubHighlights(bookId: string): EpubHighlight[] {
+  ensureEpubBook(bookId);
+  const rows = getRawDb()
+    .prepare(
+      `SELECT id, book_id, cfi, text, color, chapter, created_at, updated_at
+       FROM highlights
+       WHERE book_id = ? AND cfi IS NOT NULL
+       ORDER BY created_at ASC, id ASC`,
+    )
+    .all(bookId) as {
+      id: number;
+      book_id: string;
+      cfi: string;
+      text: string;
+      color: HighlightColor;
+      chapter: string | null;
+      created_at: number;
+      updated_at: number;
+    }[];
+
+  return rows.map((row) => ({
+    id: row.id,
+    bookId: row.book_id,
+    cfi: row.cfi,
+    text: row.text,
+    color: normalizeHighlightColor(row.color),
+    chapter: row.chapter ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }));
+}
+
+export function createEpubHighlight(input: CreateEpubHighlightInput): EpubHighlight {
+  ensureEpubBook(input.bookId);
+  if (!isValidCfi(input.cfi)) {
+    throw new ReaderQueryError("CFI is invalid", 400);
+  }
+  const text = normalizeHighlightText(input.text);
+  const color = normalizeHighlightColor(input.color);
+  const chapter = input.chapter ? normalizeChapterTitle(input.chapter) : undefined;
+
+  const now = Date.now();
+  const result = getRawDb()
+    .prepare(
+      `INSERT INTO highlights (
+        book_id, text, color, cfi, chapter, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .run(input.bookId, text, color, input.cfi, chapter ?? null, now, now);
+
+  const row = getRawDb()
+    .prepare(
+      `SELECT id, book_id, cfi, text, color, chapter, created_at, updated_at
+       FROM highlights
+       WHERE id = ?`,
+    )
+    .get(result.lastInsertRowid) as {
+      id: number;
+      book_id: string;
+      cfi: string;
+      text: string;
+      color: HighlightColor;
+      chapter: string | null;
+      created_at: number;
+      updated_at: number;
+    } | undefined;
+
+  if (!row) {
+    throw new ReaderQueryError("Highlight insert failed", 500);
+  }
+
+  return {
+    id: row.id,
+    bookId: row.book_id,
+    cfi: row.cfi,
+    text: row.text,
+    color: normalizeHighlightColor(row.color),
+    chapter: row.chapter ?? undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function deleteEpubHighlight(highlightId: number): boolean {
+  if (!Number.isInteger(highlightId) || highlightId < 1) {
+    throw new ReaderQueryError("Highlight id is invalid", 400);
+  }
+
+  const result = getRawDb().prepare("DELETE FROM highlights WHERE id = ?").run(highlightId);
+  return result.changes > 0;
+}
+
+function ensureEpubBook(bookId: string) {
+  const book = getBookById(bookId);
+  if (!book) {
+    throw new ReaderQueryError("Book not found", 404);
+  }
+
+  if (book.format !== "epub") {
+    throw new ReaderQueryError("Highlights are only available for EPUB books", 400);
+  }
+
+  return book;
 }

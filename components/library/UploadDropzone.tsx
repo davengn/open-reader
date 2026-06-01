@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -63,10 +64,10 @@ export function UploadDropzone({ onUploaded }: UploadDropzoneProps) {
       </div>
       <p className="upload-copy">Drop a PDF or EPUB up to 200 MB, or choose a local file from disk.</p>
       <div className="upload-actions">
-        <button className="button-primary" type="button" disabled={busy} onClick={() => inputRef.current?.click()}>
+        <Button variant="default" disabled={busy} onClick={() => inputRef.current?.click()}>
           <Upload className="inline-icon" aria-hidden="true" />
           {busy ? "Uploading" : "Choose file"}
-        </button>
+        </Button>
         <input
           ref={inputRef}
           type="file"

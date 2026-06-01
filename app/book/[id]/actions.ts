@@ -1,6 +1,6 @@
 "use server";
 
-import { upsertPdfProgress } from "@/lib/db/queries/reader";
+import { upsertPdfProgress, upsertEpubProgress } from "@/lib/db/queries/reader";
 import { calculatePdfProgress } from "@/lib/reader/progress";
 
 type UpdateProgressInput = {
@@ -33,3 +33,34 @@ export async function updateProgress(input: UpdateProgressInput): Promise<{
     updatedAt: progress.updatedAt,
   };
 }
+
+type UpdateEpubProgressInput = {
+  bookId: string;
+  cfi: string;
+  percentage: number;
+  chapter?: string;
+};
+
+export async function updateEpubProgress(input: UpdateEpubProgressInput): Promise<{
+  ok: true;
+  cfi: string;
+  percentage: number;
+  chapter?: string;
+  updatedAt: number;
+}> {
+  const progress = upsertEpubProgress({
+    bookId: input.bookId,
+    cfi: input.cfi,
+    percentage: input.percentage,
+    chapter: input.chapter,
+  });
+
+  return {
+    ok: true,
+    cfi: progress.cfi,
+    percentage: progress.percentage,
+    chapter: progress.chapter,
+    updatedAt: progress.updatedAt,
+  };
+}
+

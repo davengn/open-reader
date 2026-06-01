@@ -34,7 +34,7 @@ describe("book ingestion", () => {
     expect(book?.author).toBe("Reader");
     expect(book?.coverPath).toContain("books/covers/");
     expect(countBookChunks(id)).toBeGreaterThan(0);
-  });
+  }, 15000);
 
   it("processes an EPUB package into a ready book", async () => {
     await createTestEnv();

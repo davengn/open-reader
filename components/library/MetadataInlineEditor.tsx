@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Check, X } from "lucide-react";
 import { useState } from "react";
 import type { BookSummary } from "@/lib/types/books";
@@ -42,22 +44,22 @@ export function MetadataInlineEditor({ book, onCancel, onSaved }: MetadataInline
     <form className="metadata-form" onSubmit={submit}>
       <label>
         Title
-        <input value={title} maxLength={300} onChange={(event) => setTitle(event.target.value)} />
+        <Input value={title} maxLength={300} onChange={(event) => setTitle(event.target.value)} />
       </label>
       <label>
         Author
-        <input value={author} maxLength={300} onChange={(event) => setAuthor(event.target.value)} />
+        <Input value={author} maxLength={300} onChange={(event) => setAuthor(event.target.value)} />
       </label>
       {error ? <p className="message error">{error}</p> : null}
       <div className="metadata-actions">
-        <button className="button-primary" type="submit" disabled={busy}>
+        <Button type="submit" disabled={busy}>
           <Check className="inline-icon" aria-hidden="true" />
           Save
-        </button>
-        <button className="button-secondary" type="button" disabled={busy} onClick={onCancel}>
+        </Button>
+        <Button variant="secondary" type="button" disabled={busy} onClick={onCancel}>
           <X className="inline-icon" aria-hidden="true" />
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

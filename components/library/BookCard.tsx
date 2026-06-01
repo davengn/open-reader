@@ -1,11 +1,16 @@
 "use client";
 
-import { Edit3, Trash2, X } from "lucide-react";
+import { Edit3, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { MetadataInlineEditor } from "@/components/library/MetadataInlineEditor";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { getBookInitials } from "@/lib/library/covers";
+import { cn } from "@/lib/utils";
 import type { BookSummary } from "@/lib/types/books";
 
 type BookCardProps = {
@@ -70,56 +75,59 @@ export function BookCard({ book, onBookChanged }: BookCardProps) {
 
       <div className="book-foot">
         <div className="badge-row">
-          <span className="badge">{book.format}</span>
-          <span className={`badge ${book.status}`}>{book.status}</span>
+          <Badge variant="secondary" className="font-extrabold text-[0.74rem] uppercase h-6 px-2">
+            {book.format}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              "font-extrabold text-[0.74rem] uppercase h-6 px-2",
+              book.status === "ready" && "bg-[#e6efe4] text-success hover:bg-[#e6efe4]/90 border-transparent",
+              book.status === "indexing" && "bg-[#fff1d7] text-warning hover:bg-[#fff1d7]/90 border-transparent",
+              book.status === "error" && "bg-[#f8e5df] text-danger hover:bg-[#f8e5df]/90 border-transparent"
+            )}
+          >
+            {book.status}
+          </Badge>
         </div>
-        <div className="progress-track" aria-label={`${book.readingPercent}% read`}>
-          <div className="progress-value" style={{ width: `${book.readingPercent}%` }} />
-        </div>
+        <Progress value={book.readingPercent} className="h-2" aria-label={`${book.readingPercent}% read`} />
         {book.statusMessage ? <p className="message error">{book.statusMessage}</p> : null}
         {error ? <p className="message error">{error}</p> : null}
         <div className="card-actions">
-          <button className="icon-button" type="button" aria-label={`Edit ${book.title}`} onClick={() => setEditing(true)}>
+          <Button variant="outline" size="icon" aria-label={`Edit ${book.title}`} onClick={() => setEditing(true)}>
             <Edit3 className="inline-icon" aria-hidden="true" />
-          </button>
-          <button
-            className="icon-button danger"
-            type="button"
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="hover:text-destructive text-destructive/80"
             aria-label={`Delete ${book.title}`}
             onClick={() => setConfirmingDelete(true)}
           >
             <Trash2 className="inline-icon" aria-hidden="true" />
-          </button>
+          </Button>
         </div>
       </div>
 
-      {confirmingDelete ? (
-        <div className="dialog-backdrop" role="presentation">
-          <section className="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby={`delete-${book.id}`}>
-            <button
-              className="icon-button"
-              type="button"
-              aria-label="Close delete confirmation"
-              onClick={() => setConfirmingDelete(false)}
-            >
-              <X className="inline-icon" aria-hidden="true" />
-            </button>
-            <h3 id={`delete-${book.id}`}>Delete this book?</h3>
-            <p>
+      <Dialog open={confirmingDelete} onOpenChange={setConfirmingDelete}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete this book?</DialogTitle>
+            <DialogDescription>
               {book.title} and its local reading memory will be removed from this Open Reader library.
-            </p>
-            <div className="dialog-actions">
-              <button className="button-secondary" type="button" disabled={busy} onClick={() => setConfirmingDelete(false)}>
-                Cancel
-              </button>
-              <button className="button-primary" type="button" disabled={busy} onClick={deleteBook}>
-                <Trash2 className="inline-icon" aria-hidden="true" />
-                Delete
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="secondary" disabled={busy} onClick={() => setConfirmingDelete(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" disabled={busy} onClick={deleteBook}>
+              <Trash2 className="inline-icon" aria-hidden="true" />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }

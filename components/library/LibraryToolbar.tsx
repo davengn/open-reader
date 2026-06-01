@@ -1,6 +1,8 @@
 "use client";
 
 import { ArrowDownAZ } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { BookFilter, BookSort } from "@/lib/types/books";
 
 type LibraryToolbarProps = {
@@ -30,15 +32,14 @@ export function LibraryToolbar({
     <div className="library-toolbar" aria-label="Library controls">
       <div className="segments" role="group" aria-label="Filter by format">
         {FILTERS.map((item) => (
-          <button
-            className="segment-button"
+          <Button
             key={item.value}
-            type="button"
-            aria-pressed={filter === item.value}
+            variant={filter === item.value ? "default" : "secondary"}
+            size="sm"
             onClick={() => onFilterChange(item.value)}
           >
             {item.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -48,16 +49,17 @@ export function LibraryToolbar({
         </span>
         <label className="toolbar-side" aria-label="Sort books">
           <ArrowDownAZ className="inline-icon" aria-hidden="true" />
-          <select
-            className="select-control"
-            value={sort}
-            onChange={(event) => onSortChange(event.target.value as BookSort)}
-          >
-            <option value="dateAdded">Date added</option>
-            <option value="lastRead">Last read</option>
-            <option value="title">Title</option>
-            <option value="author">Author</option>
-          </select>
+          <Select value={sort} onValueChange={(val) => onSortChange(val as BookSort)}>
+            <SelectTrigger className="w-[140px] h-[40px] border border-line bg-surface text-ink rounded-md font-semibold px-3 py-2">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dateAdded">Date added</SelectItem>
+              <SelectItem value="lastRead">Last read</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+              <SelectItem value="author">Author</SelectItem>
+            </SelectContent>
+          </Select>
         </label>
       </div>
     </div>

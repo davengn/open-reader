@@ -17,8 +17,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return jsonError("Book not found", 404);
   }
 
-  if (book.format !== "pdf") {
-    return jsonError("Only PDF books can be opened in this reader", 409);
+  if (book.format !== "pdf" && book.format !== "epub") {
+    return jsonError("Only PDF and EPUB books can be opened in this reader", 409);
   }
 
   if (book.status !== "ready") {
@@ -28,19 +28,22 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   try {
     const filePath = resolveStoragePath(book.filePath);
     const info = await stat(filePath);
-    const filename = `${safeFilename(book.title)}.pdf`;
+    const contentType = book.format === "pdf" ? "application/pdf" : "application/epub+zip";
+    const ext = book.format === "pdf" ? ".pdf" : ".epub";
+    const filename = `${safeFilename(book.title)}${ext}`;
     const stream = Readable.toWeb(createReadStream(filePath));
 
     return new Response(stream as BodyInit, {
       headers: {
-        "Content-Type": "application/pdf",
+        "Content-Type": contentType,
         "Content-Length": String(info.size),
         "Content-Disposition": `inline; filename="${filename}"`,
         "Cache-Control": "private, no-store",
       },
     });
   } catch {
-    return jsonError("PDF file could not be opened", 500);
+    const errorMsg = book.format === "pdf" ? "PDF file could not be opened" : "EPUB file could not be opened";
+    return jsonError(errorMsg, 500);
   }
 }
 
