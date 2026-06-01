@@ -1,0 +1,282 @@
+
+<style>
+*{box-sizing:border-box}
+h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.label{font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-tertiary);margin:0 0 10px}
+.layer-stack{display:flex;flex-direction:column;gap:6px;margin-bottom:1.5rem}
+.layer{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:12px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:border-color .15s}
+.layer:hover{border-color:var(--color-border-primary)}
+.layer-icon{font-size:18px;flex-shrink:0;color:var(--color-text-tertiary);width:22px;text-align:center}
+.layer-content{flex:1}
+.layer-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:1px}
+.layer-sub{font-size:11px;color:var(--color-text-secondary);line-height:1.5}
+.layer-pkg{font-size:10px;font-family:var(--font-mono);color:var(--color-text-tertiary);background:var(--color-background-tertiary);border-radius:4px;padding:1px 5px;white-space:nowrap}
+.layer-pkgs{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.layer.fe{border-left:2px solid #7F77DD;border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.layer.api{border-left:2px solid #1D9E75;border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.layer.orm{border-left:2px solid #BA7517;border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.layer.db{border-left:2px solid #378ADD;border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.layer.ai{border-left:2px solid #D85A30;border-radius:0 var(--border-radius-lg) var(--border-radius-lg) 0}
+.divider{height:0.5px;background:var(--color-border-tertiary);margin:1.5rem 0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+@media(max-width:520px){.two-col{grid-template-columns:1fr}}
+.tree{font-family:var(--font-mono);font-size:11px;line-height:2;color:var(--color-text-secondary)}
+.tree-dir{color:var(--color-text-primary);font-weight:500}
+.tree-note{color:var(--color-text-tertiary);font-size:10px}
+.schema-table{width:100%;font-size:11px;border-collapse:collapse;margin-top:8px}
+.schema-table th{font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--color-text-tertiary);text-align:left;padding:4px 8px 4px 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.schema-table td{padding:4px 8px 4px 0;color:var(--color-text-secondary);vertical-align:top;border-bottom:0.5px solid var(--color-border-tertiary)}
+.schema-table td:first-child{color:var(--color-text-primary);font-weight:500}
+.pk{font-size:9px;background:var(--color-background-info);color:var(--color-text-info);padding:1px 4px;border-radius:3px;vertical-align:middle;margin-left:4px}
+.fk{font-size:9px;background:var(--color-background-warning);color:var(--color-text-warning);padding:1px 4px;border-radius:3px;vertical-align:middle;margin-left:4px}
+.tbl-name{font-size:12px;font-weight:500;color:var(--color-text-primary);margin:14px 0 2px;font-family:var(--font-mono)}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:8px}
+.feat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:10px 12px;cursor:pointer}
+.feat-card:hover{background:var(--color-background-tertiary)}
+.feat-icon{font-size:16px;color:var(--color-text-secondary);margin-bottom:4px}
+.feat-title{font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:2px}
+.feat-desc{font-size:11px;color:var(--color-text-secondary);line-height:1.4}
+.cta-row{display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap}
+.btn{font-size:12px;padding:7px 14px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:transparent;color:var(--color-text-primary);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .15s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn.primary{background:var(--color-background-info);color:var(--color-text-info);border-color:transparent}
+.btn.primary:hover{opacity:.85}
+</style>
+
+<h2 class="sr-only">SWE reader app — TypeScript + SQLite architecture: stack layers, folder structure, schema, and feature modules</h2>
+
+<div style="padding:1rem 0 0">
+
+<div class="label">Stack layers</div>
+<div class="layer-stack">
+  <div class="layer fe" onclick="sendPrompt('What Next.js 15 App Router features should I use for the SWE reader frontend?')">
+    <i class="ti ti-layout-dashboard layer-icon" aria-hidden="true"></i>
+    <div class="layer-content">
+      <div class="layer-title">Frontend — Next.js 15 App Router</div>
+      <div class="layer-sub">React server + client components, shadcn/ui, Tailwind. pdf.js renders PDFs, epub.js renders EPUBs — both run fully in-browser.</div>
+      <div class="layer-pkgs">
+        <span class="layer-pkg">next</span>
+        <span class="layer-pkg">pdfjs-dist</span>
+        <span class="layer-pkg">epubjs</span>
+        <span class="layer-pkg">shadcn/ui</span>
+        <span class="layer-pkg">tailwindcss</span>
+        <span class="layer-pkg">lucide-react</span>
+      </div>
+    </div>
+  </div>
+  <div class="layer api" onclick="sendPrompt('How do I structure Next.js API routes and Server Actions for the SWE reader?')">
+    <i class="ti ti-api layer-icon" aria-hidden="true"></i>
+    <div class="layer-content">
+      <div class="layer-title">Backend — Next.js API Routes + Server Actions</div>
+      <div class="layer-sub">No separate server process. API routes handle file uploads, streaming AI responses (SSE). Server actions handle mutations — save note, update progress, toggle highlight.</div>
+      <div class="layer-pkgs">
+        <span class="layer-pkg">next/server</span>
+        <span class="layer-pkg">zod</span>
+        <span class="layer-pkg">formidable</span>
+        <span class="layer-pkg">pdf-parse</span>
+        <span class="layer-pkg">epub2</span>
+      </div>
+    </div>
+  </div>
+  <div class="layer orm" onclick="sendPrompt('Show me a complete Drizzle ORM schema for the SWE reader with better-sqlite3')">
+    <i class="ti ti-database layer-icon" aria-hidden="true"></i>
+    <div class="layer-content">
+      <div class="layer-title">ORM — Drizzle + better-sqlite3</div>
+      <div class="layer-sub">TypeScript-first schema, type-safe queries, zero runtime overhead. Drizzle Kit handles migrations. SQLite FTS5 (built-in) for full-text book search — no vector DB needed.</div>
+      <div class="layer-pkgs">
+        <span class="layer-pkg">drizzle-orm</span>
+        <span class="layer-pkg">better-sqlite3</span>
+        <span class="layer-pkg">drizzle-kit</span>
+        <span class="layer-pkg">SQLite FTS5</span>
+      </div>
+    </div>
+  </div>
+  <div class="layer db" onclick="sendPrompt('What should I store in SQLite vs the filesystem for the SWE reader?')">
+    <i class="ti ti-file layer-icon" aria-hidden="true"></i>
+    <div class="layer-content">
+      <div class="layer-title">Storage — reader.db + /books filesystem</div>
+      <div class="layer-sub">One SQLite file for all metadata, highlights, notes, flashcards, and book text chunks. Raw PDF/EPUB files stay on disk in /books. No S3, no cloud — just files.</div>
+      <div class="layer-pkgs">
+        <span class="layer-pkg">reader.db</span>
+        <span class="layer-pkg">/books/*.pdf</span>
+        <span class="layer-pkg">/books/*.epub</span>
+      </div>
+    </div>
+  </div>
+  <div class="layer ai" onclick="sendPrompt('How do I implement streaming AI chat over books using the Anthropic SDK in Next.js?')">
+    <i class="ti ti-sparkles layer-icon" aria-hidden="true"></i>
+    <div class="layer-content">
+      <div class="layer-title">AI — Anthropic SDK (Claude)</div>
+      <div class="layer-sub">FTS5 retrieves relevant book chunks → stuffed into Claude's context. Streaming SSE response for chat. Batch generate flashcards from highlights. Chapter summaries on demand.</div>
+      <div class="layer-pkgs">
+        <span class="layer-pkg">@anthropic-ai/sdk</span>
+        <span class="layer-pkg">claude-sonnet-4-5</span>
+        <span class="layer-pkg">FTS5 retrieval</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="two-col">
+  <div>
+    <div class="label">Folder structure</div>
+    <div class="tree">
+<span class="tree-dir">swe-reader/</span>
+├── <span class="tree-dir">app/</span>
+│   ├── <span class="tree-dir">(library)/</span>
+│   │   └── page.tsx <span class="tree-note">book grid</span>
+│   ├── <span class="tree-dir">book/[id]/</span>
+│   │   ├── page.tsx <span class="tree-note">reader view</span>
+│   │   └── notes/page.tsx
+│   ├── flashcards/page.tsx
+│   └── <span class="tree-dir">api/</span>
+│       ├── books/route.ts
+│       ├── books/[id]/route.ts
+│       ├── highlights/route.ts
+│       ├── notes/route.ts
+│       ├── search/route.ts <span class="tree-note">FTS5</span>
+│       └── ai/
+│           ├── chat/route.ts <span class="tree-note">SSE</span>
+│           └── generate/route.ts
+├── <span class="tree-dir">components/</span>
+│   ├── reader/
+│   │   ├── PdfReader.tsx
+│   │   ├── EpubReader.tsx
+│   │   └── HighlightMenu.tsx
+│   ├── notes/
+│   │   ├── NotePanel.tsx
+│   │   └── NoteEditor.tsx
+│   └── ai/
+│       ├── ChatPanel.tsx
+│       └── FlashcardDeck.tsx
+├── <span class="tree-dir">lib/</span>
+│   ├── db/
+│   │   ├── schema.ts <span class="tree-note">Drizzle tables</span>
+│   │   ├── index.ts <span class="tree-note">singleton</span>
+│   │   └── queries/ <span class="tree-note">typed fns</span>
+│   ├── extract/
+│   │   ├── pdf.ts
+│   │   └── epub.ts
+│   └── ai.ts
+├── <span class="tree-dir">books/</span> <span class="tree-note">uploaded files</span>
+├── reader.db
+├── drizzle.config.ts
+└── next.config.ts
+    </div>
+  </div>
+
+  <div>
+    <div class="label">SQLite schema</div>
+    <div class="tbl-name">books</div>
+    <table class="schema-table">
+      <tr><th>column</th><th>type</th></tr>
+      <tr><td>id<span class="pk">PK</span></td><td>integer autoincrement</td></tr>
+      <tr><td>title</td><td>text not null</td></tr>
+      <tr><td>author</td><td>text</td></tr>
+      <tr><td>format</td><td>'pdf' | 'epub'</td></tr>
+      <tr><td>filePath</td><td>text not null</td></tr>
+      <tr><td>totalPages</td><td>integer</td></tr>
+      <tr><td>createdAt</td><td>integer (unix ms)</td></tr>
+    </table>
+
+    <div class="tbl-name">highlights</div>
+    <table class="schema-table">
+      <tr><th>column</th><th>type</th></tr>
+      <tr><td>id<span class="pk">PK</span></td><td>integer</td></tr>
+      <tr><td>bookId<span class="fk">FK</span></td><td>→ books.id</td></tr>
+      <tr><td>text</td><td>text not null</td></tr>
+      <tr><td>color</td><td>'yellow'|'green'|'blue'</td></tr>
+      <tr><td>page</td><td>integer</td></tr>
+      <tr><td>cfi</td><td>text (epub CFI)</td></tr>
+      <tr><td>chapter</td><td>text</td></tr>
+    </table>
+
+    <div class="tbl-name">notes</div>
+    <table class="schema-table">
+      <tr><th>column</th><th>type</th></tr>
+      <tr><td>id<span class="pk">PK</span></td><td>integer</td></tr>
+      <tr><td>bookId<span class="fk">FK</span></td><td>→ books.id</td></tr>
+      <tr><td>highlightId<span class="fk">FK</span></td><td>→ highlights.id (null ok)</td></tr>
+      <tr><td>content</td><td>text (markdown)</td></tr>
+      <tr><td>page</td><td>integer</td></tr>
+      <tr><td>updatedAt</td><td>integer</td></tr>
+    </table>
+
+    <div class="tbl-name">flashcards</div>
+    <table class="schema-table">
+      <tr><th>column</th><th>type</th></tr>
+      <tr><td>id<span class="pk">PK</span></td><td>integer</td></tr>
+      <tr><td>bookId<span class="fk">FK</span></td><td>→ books.id</td></tr>
+      <tr><td>front / back</td><td>text</td></tr>
+      <tr><td>nextReview</td><td>integer (unix ms)</td></tr>
+      <tr><td>interval</td><td>integer (days)</td></tr>
+      <tr><td>easeFactor</td><td>real (SM-2)</td></tr>
+    </table>
+
+    <div class="tbl-name">book_chunks + FTS5</div>
+    <table class="schema-table">
+      <tr><th>column</th><th>type</th></tr>
+      <tr><td>id<span class="pk">PK</span></td><td>integer</td></tr>
+      <tr><td>bookId<span class="fk">FK</span></td><td>→ books.id</td></tr>
+      <tr><td>content</td><td>text (500-token chunk)</td></tr>
+      <tr><td>chapter</td><td>text</td></tr>
+      <tr><td>page</td><td>integer</td></tr>
+    </table>
+    <div style="font-size:10px;color:var(--color-text-tertiary);margin-top:4px">+ virtual FTS5 table indexes content for instant full-text search</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<div class="label">Feature modules to build</div>
+<div class="feat-grid">
+  <div class="feat-card" onclick="sendPrompt('Implement the PDF reader component with pdf.js and highlight selection in Next.js TypeScript')">
+    <div class="feat-icon"><i class="ti ti-file-type-pdf" aria-hidden="true"></i></div>
+    <div class="feat-title">PDF + EPUB reader</div>
+    <div class="feat-desc">pdf.js renders pages. epub.js handles reflowable text. Both expose text selection for highlighting.</div>
+  </div>
+  <div class="feat-card" onclick="sendPrompt('Implement highlight saving and retrieval with Drizzle ORM and SQLite for the book reader')">
+    <div class="feat-icon"><i class="ti ti-highlight" aria-hidden="true"></i></div>
+    <div class="feat-title">Highlights + notes</div>
+    <div class="feat-desc">Select text → pick color → save via server action. Notes attach to highlights or stand-alone per page.</div>
+  </div>
+  <div class="feat-card" onclick="sendPrompt('How do I implement SQLite FTS5 full-text search over book content with Drizzle ORM?')">
+    <div class="feat-icon"><i class="ti ti-search" aria-hidden="true"></i></div>
+    <div class="feat-title">Full-text search (FTS5)</div>
+    <div class="feat-desc">SQLite FTS5 virtual table indexes all book text at upload time. Zero-latency search across your whole library.</div>
+  </div>
+  <div class="feat-card" onclick="sendPrompt('Implement streaming AI chat over book chunks using FTS5 retrieval and the Anthropic SDK in Next.js')">
+    <div class="feat-icon"><i class="ti ti-message-circle-2" aria-hidden="true"></i></div>
+    <div class="feat-title">Chat with book (RAG)</div>
+    <div class="feat-desc">FTS5 retrieves top chunks for the query → sent as context to Claude → streams response back via SSE.</div>
+  </div>
+  <div class="feat-card" onclick="sendPrompt('Implement SM-2 spaced repetition algorithm for flashcard review in TypeScript')">
+    <div class="feat-icon"><i class="ti ti-cards" aria-hidden="true"></i></div>
+    <div class="feat-title">Flashcards (SM-2)</div>
+    <div class="feat-desc">Claude generates front/back from a highlight. SM-2 algorithm (pure TS, 20 lines) schedules next review.</div>
+  </div>
+  <div class="feat-card" onclick="sendPrompt('Implement reading progress tracking for PDF and EPUB in Next.js with SQLite')">
+    <div class="feat-icon"><i class="ti ti-progress" aria-hidden="true"></i></div>
+    <div class="feat-title">Reading progress</div>
+    <div class="feat-desc">Debounced server action saves page / epub CFI on scroll. Resume exactly where you left off.</div>
+  </div>
+</div>
+
+<div class="cta-row">
+  <button class="btn primary" onclick="sendPrompt('Generate a complete CLAUDE.md for my SWE reader project: Next.js 15, TypeScript, Drizzle ORM, better-sqlite3, Anthropic SDK — include project goals, architecture, schema, and Claude Code instructions')">
+    <i class="ti ti-file-text" aria-hidden="true"></i> Generate CLAUDE.md ↗
+  </button>
+  <button class="btn" onclick="sendPrompt('Write the complete Drizzle ORM schema.ts with all tables: books, reading_progress, highlights, notes, flashcards, book_chunks, and FTS5 virtual table setup')">
+    <i class="ti ti-database" aria-hidden="true"></i> Drizzle schema.ts ↗
+  </button>
+  <button class="btn" onclick="sendPrompt('Write the complete package.json for my SWE reader with Next.js 15, Drizzle, better-sqlite3, pdfjs-dist, epubjs, and Anthropic SDK')">
+    <i class="ti ti-package" aria-hidden="true"></i> package.json ↗
+  </button>
+  <button class="btn" onclick="sendPrompt('Implement the PdfReader.tsx component using pdfjs-dist with text-layer rendering and mouse selection for highlights')">
+    <i class="ti ti-code" aria-hidden="true"></i> PdfReader.tsx ↗
+  </button>
+</div>
+
+</div>

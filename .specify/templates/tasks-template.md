@@ -9,7 +9,7 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. Tests are OPTIONAL - only include them if explicitly requested in the feature specification.
+**Tests**: The examples below include test tasks. Tests are REQUIRED when a Constitution gate is touched (reader behavior, file lifecycle, SQLite mutations, indexing/search, deletion cascades, resume/annotation persistence, accessibility). Otherwise, include tests only when requested in the feature specification.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -18,6 +18,7 @@ description: "Task list template for feature implementation"
 - **[P]**: Can run in parallel (different files, no dependencies)
 - **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
 - Include exact file paths in descriptions
+- Include explicit tasks for migrations, parser/renderer behavior, local file lifecycle, FTS5 indexing, and `DESIGN.md` visual/accessibility checks whenever the feature touches those areas
 
 ## Path Conventions
 
@@ -63,12 +64,12 @@ description: "Task list template for feature implementation"
 
 Examples of foundational tasks (adjust based on your project):
 
-- [ ] T004 Setup database schema and migrations framework
-- [ ] T005 [P] Implement authentication/authorization framework
-- [ ] T006 [P] Setup API routing and middleware structure
-- [ ] T007 Create base models/entities that all stories depend on
-- [ ] T008 Configure error handling and logging infrastructure
-- [ ] T009 Setup environment configuration management
+- [ ] T004 Setup Drizzle schema, migrations, and SQLite connection lifecycle
+- [ ] T005 [P] Setup local books/ storage helpers and safe file cleanup behavior
+- [ ] T006 [P] Setup Next.js API routes/server actions and validation boundaries
+- [ ] T007 Create base book, progress, highlight, note, flashcard, and chunk entities that all stories depend on
+- [ ] T008 Configure indexing status, error handling, and logging infrastructure
+- [ ] T009 Setup environment configuration for local storage paths and optional provider keys
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -156,6 +157,8 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Performance optimization across all stories
 - [ ] TXXX [P] Additional unit tests (if requested) in tests/unit/
 - [ ] TXXX Security hardening
+- [ ] TXXX [P] Visual/accessibility verification against DESIGN.md for touched reader/library screens
+- [ ] TXXX [P] Fixture-based PDF/EPUB regression checks for touched parser, renderer, or locator behavior
 - [ ] TXXX Run quickstart.md validation
 
 ---

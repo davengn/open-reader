@@ -98,6 +98,14 @@
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
 - **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
 
+### Constitution Alignment *(mandatory for Open Reader)*
+
+- **Reading Flow**: Specify how this feature affects add/open/resume/search/highlight/note workflows, or state that it does not touch them.
+- **Local Data Ownership**: Specify filesystem and SQLite impacts, including deletion, backup, or migration expectations for existing local libraries.
+- **PDF/EPUB Behavior**: Specify behavior for both PDF and EPUB, including stable locators and corrupt/unsupported-file handling, or justify a single-format scope.
+- **Search & Memory**: Specify indexing, FTS5, notes, highlights, flashcards, summaries, or AI grounding impacts when applicable.
+- **Quality Gates**: Specify measurable performance, persistence, reliability, accessibility, and design-system outcomes for the changed workflow.
+
 ### Key Entities *(include if feature involves data)*
 
 - **[Entity 1]**: [What it represents, key attributes without implementation]

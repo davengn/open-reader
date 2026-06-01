@@ -1,0 +1,257 @@
+openapi: 3.1.0
+info:
+  title: Open Reader Book Library API
+  version: 0.1.0
+  description: Local-first API contracts for uploading, listing, editing, polling, and deleting books.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/books:
+    get:
+      summary: List book card summaries
+      operationId: listBooks
+      responses:
+        "200":
+          description: Book summaries for the local library
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [books]
+                properties:
+                  books:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BookSummary"
+    post:
+      summary: Upload one PDF or EPUB book
+      operationId: uploadBook
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "202":
+          description: File saved and processing queued
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [book]
+                properties:
+                  book:
+                    $ref: "#/components/schemas/BookSummary"
+        "400":
+          description: Unsupported file type or malformed upload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                unsupported:
+                  value:
+                    error: Only PDF and EPUB files are supported
+        "409":
+          description: Duplicate file content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateBookResponse"
+        "413":
+          description: File exceeds 200 MB
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                tooLarge:
+                  value:
+                    error: File exceeds the 200 MB limit
+        "500":
+          description: Disk write or processing queue failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                diskWrite:
+                  value:
+                    error: "Upload failed: disk write error"
+  /api/books/{id}:
+    patch:
+      summary: Update editable book metadata
+      operationId: updateBookMetadata
+      parameters:
+        - $ref: "#/components/parameters/BookId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBookRequest"
+      responses:
+        "200":
+          description: Updated book summary
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [book]
+                properties:
+                  book:
+                    $ref: "#/components/schemas/BookSummary"
+        "400":
+          description: Invalid title or author
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      summary: Delete a book and all dependent local data
+      operationId: deleteBook
+      parameters:
+        - $ref: "#/components/parameters/BookId"
+      responses:
+        "204":
+          description: Book file and dependent rows deleted
+        "404":
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: File or database cleanup failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/books/{id}/status:
+    get:
+      summary: Poll processing status for one book
+      operationId: getBookStatus
+      parameters:
+        - $ref: "#/components/parameters/BookId"
+      responses:
+        "200":
+          description: Current processing status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookStatus"
+        "404":
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  parameters:
+    BookId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    BookSummary:
+      type: object
+      required:
+        - id
+        - title
+        - author
+        - format
+        - status
+        - readingPercent
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+        author:
+          type: string
+          minLength: 1
+        format:
+          type: string
+          enum: [pdf, epub]
+        status:
+          type: string
+          enum: [indexing, ready, error]
+        statusMessage:
+          type: string
+        coverUrl:
+          type: string
+        readingPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        lastReadAt:
+          type: integer
+          description: Unix milliseconds
+        createdAt:
+          type: integer
+          description: Unix milliseconds
+    BookStatus:
+      type: object
+      required: [id, status, readingPercent, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [indexing, ready, error]
+        statusMessage:
+          type: string
+        readingPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        updatedAt:
+          type: integer
+          description: Unix milliseconds
+    UpdateBookRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 300
+        author:
+          type: string
+          minLength: 1
+          maxLength: 300
+      minProperties: 1
+    DuplicateBookResponse:
+      type: object
+      required: [error, existingBook]
+      properties:
+        error:
+          type: string
+          example: This file is already in your library as Building Microservices.
+        existingBook:
+          $ref: "#/components/schemas/BookSummary"
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
